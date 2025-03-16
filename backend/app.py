@@ -29,7 +29,6 @@ def store_submission(data):
             "selected_plan_id": int(data.get('selected_plan_id', -1))
         }
         
-        # Validate plan ID
         if submission['selected_plan_id'] not in MEAL_PLANS:
             raise ValueError("Invalid plan ID")
             
@@ -40,10 +39,11 @@ def store_submission(data):
         app.logger.error(f"Submission storage error: {str(e)}")
 
 def load_model():
-    """Load current model and encoder with error handling"""
+    """Load current model and encoder with numpy compatibility fix"""
     try:
-        # Configure numpy for compatibility
-        np.random.bit_generator = np.random.MT19937()
+        # Explicit numpy configuration
+        from numpy.random import Generator, MT19937
+        rng = Generator(MT19937(12345))
         
         model_path = os.path.join(MODEL_DIR, 'nutrition_model.pk1')
         encoder_path = os.path.join(MODEL_DIR, 'feature_encoder.pk1')
@@ -78,7 +78,7 @@ def generate_nutrition_plan():
         model, encoder = load_model()
         
         if model and encoder:
-            # Prepare features with proper data types
+            # Prepare features
             diet_value = data['diet'][0] if isinstance(data['diet'], list) else data['diet']
             diet_goal = f"{diet_value}_{data['goal']}"
             
@@ -98,85 +98,56 @@ def generate_nutrition_plan():
                 "confidence": float(probabilities[i])
             } for i in top5_indices]
         else:
-            # Fallback to rule-based system
             plans = [get_rule_based_plan(data)]
             
-        return jsonify({
-            "success": True,
-            "plans": plans
-        })
+        return jsonify({"success": True, "plans": plans})
         
     except Exception as e:
         app.logger.error(f"Plan generation error: {str(e)}")
-        try:
-            # Secondary fallback attempt
-            return jsonify({
-                "success": True,
-                "plans": [get_rule_based_plan(data)]
-            })
-        except Exception as fallback_error:
-            return jsonify({
-                "success": False,
-                "error": f"Main: {str(e)}, Fallback: {str(fallback_error)}"
-            }), 500
+        return jsonify({
+            "success": False,
+            "error": "Failed to generate plan",
+            "fallback": get_rule_based_plan(data)
+        }), 500
 
 @app.route('/selection', methods=['POST'])
 def handle_plan_selection():
-    """Process user plan selection and retrain model"""
+    """Process user plan selection"""
     try:
         data = request.json
-        app.logger.info(f"Plan selection: {data}")
         
-        # Validate selection
         if 'selected_plan_id' not in data or data['selected_plan_id'] not in MEAL_PLANS:
-            return jsonify({
-                "success": False,
-                "error": "Invalid plan selection"
-            }), 400
+            return jsonify({"success": False, "error": "Invalid selection"}), 400
             
-        # Store submission
         store_submission(data)
         
-        # Retrain model with new data
         try:
             train_model()
-            app.logger.info("Model retrained successfully")
             return jsonify({"success": True})
         except Exception as e:
-            app.logger.error(f"Model retraining failed: {str(e)}")
-            return jsonify({
-                "success": False,
-                "error": "Selection saved but model update failed"
-            }), 500
+            app.logger.error(f"Retraining failed: {str(e)}")
+            return jsonify({"success": False, "error": "Selection saved but model update failed"}), 500
             
     except Exception as e:
-        app.logger.error(f"Selection processing error: {str(e)}")
-        return jsonify({
-            "success": False,
-            "error": "Failed to process selection"
-        }), 500
+        app.logger.error(f"Selection error: {str(e)}")
+        return jsonify({"success": False, "error": "Processing failed"}), 500
 
 @app.route('/health', methods=['GET'])
 def health_check():
-    """System health monitoring endpoint"""
-    status = {
+    return jsonify({
         "status": "healthy",
-        "model_loaded": os.path.exists(os.path.join(MODEL_DIR, 'nutrition_model.pkl')),
-        "submissions_count": sum(1 for _ in open(SUBMISSIONS_FILE)) if os.path.exists(SUBMISSIONS_FILE) else 0
-    }
-    return jsonify(status), 200
+        "model_loaded": os.path.exists(os.path.join(MODEL_DIR, 'nutrition_model.pk1')),
+        "numpy_version": np.__version__,
+        "sklearn_version": joblib.__version__
+    })
 
 def initialize_system():
-    """Initialize application components"""
     os.makedirs(MODEL_DIR, exist_ok=True)
-    
-    # Train initial model if missing
-    if not os.path.exists(os.path.join(MODEL_DIR, 'nutrition_model.pkl')):
-        app.logger.info("No model found - training initial model")
+    if not os.path.exists(os.path.join(MODEL_DIR, 'nutrition_model.pk1')):
         try:
             train_model()
         except Exception as e:
-            app.logger.error(f"Initial model training failed: {str(e)}")
+            app.logger.error(f"Initial training failed: {str(e)}")
             raise
 
 if __name__ == '__main__':
