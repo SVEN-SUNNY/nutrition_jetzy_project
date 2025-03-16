@@ -34,7 +34,7 @@ def validate_input(data):
     return True, ""
 
 def predict_plan(user_data):
-    """Generate plan using ML model"""
+   
     try:
         # Create input DataFrame
         input_df = pd.DataFrame([{
@@ -53,25 +53,24 @@ def predict_plan(user_data):
         raise RuntimeError(f"Prediction failed: {str(e)}")
 
 def get_plan_from_id(plan_id):
-    """Get plan details from predefined database"""
+
     plans = {
         0: {
-            'meals': {
-                'breakfast': 'Oatmeal with berries',
-                'lunch': 'Quinoa salad',
-                'dinner': 'Grilled vegetables'
+            "meals": {
+                "breakfast": "Oatmeal with berries",
+                "lunch": "Quinoa salad",
+                "dinner": "Grilled vegetables"
             },
-            'calories': 1500,
-            'macros': {'protein': 55, 'carbs': 120, 'fats': 40}
+            
+            "macros": {"calories": 1500, "protein": 55, "carbs": 120, "fats": 40}
         },
         1: {
-            'meals': {
-                'breakfast': 'Egg white omelette',
-                'lunch': 'Grilled chicken',
-                'dinner': 'Salmon with broccoli'
+            "meals": {
+                "breakfast": "Egg white omelette",
+                "lunch": "Grilled chicken",
+                "dinner": "Salmon with broccoli"
             },
-            'calories': 2200,
-            'macros': {'protein': 110, 'carbs': 150, 'fats': 70}
+            'macros': {"calories": 2200,"protein": 110, "carbs": 150, "fats": 70}
         }
     }
     return plans.get(plan_id, plans[0])
