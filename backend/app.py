@@ -45,8 +45,8 @@ def store_submission(data):
 def load_model():
     """Load current model and encoder with numpy compatibility fix"""
     try:
-        model_path = os.path.join(MODEL_DIR, 'nutrition_model.pkl')
-        encoder_path = os.path.join(MODEL_DIR, 'feature_encoder.pkl')
+        model_path = os.path.join(MODEL_DIR, 'nutrition_model.pk1')
+        encoder_path = os.path.join(MODEL_DIR, 'feature_encoder.pk1')
         
         if not all([os.path.exists(model_path), os.path.exists(encoder_path)]):
             raise FileNotFoundError("Model files missing")
@@ -130,7 +130,7 @@ def handle_plan_selection():
 def health_check():
     return jsonify({
         "status": "healthy",
-        "model_loaded": os.path.exists(os.path.join(MODEL_DIR, 'nutrition_model.pkl')),
+        "model_loaded": os.path.exists(os.path.join(MODEL_DIR, 'nutrition_model.pk1')),
         "numpy_version": np.__version__,
         "sklearn_version": joblib.__version__
     })
@@ -140,7 +140,7 @@ def initialize_system():
     os.makedirs(MODEL_DIR, exist_ok=True)
     
     # Train initial model if missing
-    if not os.path.exists(os.path.join(MODEL_DIR, 'nutrition_model.pkl')):
+    if not os.path.exists(os.path.join(MODEL_DIR, 'nutrition_model.pk1')):
         try:
             train_model()
             app.logger.info("Initial model trained successfully")
