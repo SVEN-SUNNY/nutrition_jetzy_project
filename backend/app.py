@@ -45,8 +45,8 @@ def load_model():
         # Configure numpy for compatibility
         np.random.bit_generator = np.random.MT19937()
         
-        model_path = os.path.join(MODEL_DIR, 'nutrition_model.pkl')
-        encoder_path = os.path.join(MODEL_DIR, 'feature_encoder.pkl')
+        model_path = os.path.join(MODEL_DIR, 'nutrition_model.pk1')
+        encoder_path = os.path.join(MODEL_DIR, 'feature_encoder.pk1')
         
         if not os.path.exists(model_path) or not os.path.exists(encoder_path):
             raise FileNotFoundError("Model files missing")
