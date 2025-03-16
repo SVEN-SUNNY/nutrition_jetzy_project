@@ -18,6 +18,10 @@ CORS(app, resources={
 SUBMISSIONS_FILE = 'submissions.json'
 MODEL_DIR = 'model'
 
+# Configure numpy random generator
+from numpy.random import Generator, MT19937
+rng = Generator(MT19937(12345))
+
 def store_submission(data):
     """Store user submission with validation"""
     try:
@@ -41,20 +45,14 @@ def store_submission(data):
 def load_model():
     """Load current model and encoder with numpy compatibility fix"""
     try:
-        # Explicit numpy configuration
-        from numpy.random import Generator, MT19937
-        rng = Generator(MT19937(12345))
+        model_path = os.path.join(MODEL_DIR, 'nutrition_model.pkl')
+        encoder_path = os.path.join(MODEL_DIR, 'feature_encoder.pkl')
         
-        model_path = os.path.join(MODEL_DIR, 'nutrition_model.pk1')
-        encoder_path = os.path.join(MODEL_DIR, 'feature_encoder.pk1')
-        
-        if not os.path.exists(model_path) or not os.path.exists(encoder_path):
+        if not all([os.path.exists(model_path), os.path.exists(encoder_path)]):
             raise FileNotFoundError("Model files missing")
             
-        return (
-            joblib.load(model_path),
-            joblib.load(encoder_path)
-        )
+        return joblib.load(model_path), joblib.load(encoder_path)
+        
     except Exception as e:
         app.logger.error(f"Model loading failed: {str(e)}")
         return None, None
@@ -63,40 +61,33 @@ def load_model():
 def generate_nutrition_plan():
     """Generate personalized nutrition recommendations"""
     try:
-        data = request.json
-        app.logger.info(f"Plan request: {data}")
+        data = request.get_json()
         
         # Validate input
-        required_fields = ['name', 'diet', 'goal']
-        if not all(data.get(field) for field in required_fields):
-            return jsonify({
-                "success": False,
-                "error": "Missing required fields: name, diet, or goal"
-            }), 400
+        if not all(key in data for key in ['name', 'diet', 'goal']):
+            return jsonify({"success": False, "error": "Missing required fields"}), 400
             
-        # Load model components
+        # Load ML model
         model, encoder = load_model()
         
         if model and encoder:
-            # Prepare features
+            # Prepare input features
             diet_value = data['diet'][0] if isinstance(data['diet'], list) else data['diet']
-            diet_goal = f"{diet_value}_{data['goal']}"
-            
             input_df = pd.DataFrame([{
                 'diet': diet_value,
                 'goal': data['goal'],
-                'diet_goal': diet_goal
+                'diet_goal': f"{diet_value}_{data['goal']}"
             }])
             
             # Generate predictions
             encoded = encoder.transform(input_df)
-            probabilities = model.predict_proba(encoded)[0]
-            top5_indices = np.argsort(probabilities)[-5:][::-1]
+            proba = model.predict_proba(encoded)[0]
+            top5_idx = np.argsort(proba)[-5:][::-1]
             
             plans = [{
                 **MEAL_PLANS[model.classes_[i]],
-                "confidence": float(probabilities[i])
-            } for i in top5_indices]
+                "confidence": float(proba[i])
+            } for i in top5_idx]
         else:
             plans = [get_rule_based_plan(data)]
             
@@ -112,44 +103,52 @@ def generate_nutrition_plan():
 
 @app.route('/selection', methods=['POST'])
 def handle_plan_selection():
-    """Process user plan selection"""
+    """Process user plan selection and retrain model"""
     try:
-        data = request.json
+        data = request.get_json()
         
+        # Validate selection
         if 'selected_plan_id' not in data or data['selected_plan_id'] not in MEAL_PLANS:
-            return jsonify({"success": False, "error": "Invalid selection"}), 400
+            return jsonify({"success": False, "error": "Invalid plan selection"}), 400
             
+        # Store submission
         store_submission(data)
         
+        # Retrain model
         try:
             train_model()
             return jsonify({"success": True})
         except Exception as e:
-            app.logger.error(f"Retraining failed: {str(e)}")
+            app.logger.error(f"Model retraining failed: {str(e)}")
             return jsonify({"success": False, "error": "Selection saved but model update failed"}), 500
             
     except Exception as e:
-        app.logger.error(f"Selection error: {str(e)}")
-        return jsonify({"success": False, "error": "Processing failed"}), 500
+        app.logger.error(f"Selection processing error: {str(e)}")
+        return jsonify({"success": False, "error": "Failed to process selection"}), 500
 
 @app.route('/health', methods=['GET'])
 def health_check():
     return jsonify({
         "status": "healthy",
-        "model_loaded": os.path.exists(os.path.join(MODEL_DIR, 'nutrition_model.pk1')),
+        "model_loaded": os.path.exists(os.path.join(MODEL_DIR, 'nutrition_model.pkl')),
         "numpy_version": np.__version__,
         "sklearn_version": joblib.__version__
     })
 
 def initialize_system():
+    """Initialize application components"""
     os.makedirs(MODEL_DIR, exist_ok=True)
-    if not os.path.exists(os.path.join(MODEL_DIR, 'nutrition_model.pk1')):
+    
+    # Train initial model if missing
+    if not os.path.exists(os.path.join(MODEL_DIR, 'nutrition_model.pkl')):
         try:
             train_model()
+            app.logger.info("Initial model trained successfully")
         except Exception as e:
-            app.logger.error(f"Initial training failed: {str(e)}")
+            app.logger.error(f"Initial model training failed: {str(e)}")
             raise
 
 if __name__ == '__main__':
     initialize_system()
-    app.run(host='0.0.0.0', port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
