@@ -17,8 +17,8 @@ CORS(app, resources={
 
 # Load ML model and encoder
 try:
-    model = joblib.load('nutrition_model.pkl')
-    encoder = joblib.load('feature_encoder.pkl')
+    model = joblib.load('nutrition_model.pk1')
+    encoder = joblib.load('feature_encoder.pk1')
 except Exception as e:
     print(f"Error loading ML artifacts: {str(e)}")
     model = None
