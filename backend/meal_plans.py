@@ -158,7 +158,8 @@ MEAL_PLANS = {
     }
 }
 
-def create_dataset():
+def create_dataset() -> pd.DataFrame:
+    """Create synthetic dataset for training"""
     np.random.seed(42)
     return pd.DataFrame({
         'diet': np.random.choice(
@@ -172,60 +173,58 @@ def create_dataset():
         'plan_id': np.random.choice(list(MEAL_PLANS.keys()), 500)
     })
 
-def train_model():
+def train_model() -> None:
+    """Train and save the ML model"""
     try:
-        df = create_dataset()
-        encoder = OneHotEncoder()
+        # Create model directory if it doesn't exist
+        os.makedirs('model', exist_ok=True)
         
+        # Create and prepare dataset
+        df = create_dataset()
+        encoder = OneHotEncoder(handle_unknown='ignore')
+        
+        # Transform features
         features = encoder.fit_transform(df[['diet', 'goal']])
         
-        model = RandomForestClassifier(n_estimators=100, random_state=42)
+        # Train model
+        model = RandomForestClassifier(
+            n_estimators=100,
+            random_state=42,
+            class_weight='balanced'
+        )
         model.fit(features, df['plan_id'])
         
+        # Save artifacts
         joblib.dump(model, 'model/nutrition_model.pkl')
         joblib.dump(encoder, 'model/feature_encoder.pkl')
         
-        print("Model trained successfully with features: diet, goal")
+        print("✅ Model trained and saved successfully")
         
     except Exception as e:
-        print(f"Model training failed: {str(e)}")
+        print(f"❌ Model training failed: {str(e)}")
         raise
 
-def generate_ml_plan(user_data, model, encoder):
+def load_model_artifacts():
+    """Load model and encoder from disk"""
     try:
-        diet = user_data['diet'][0] if user_data['diet'] else 'vegetarian'
+        model_path = os.path.join('model', 'nutrition_model.pkl')
+        encoder_path = os.path.join('model', 'feature_encoder.pkl')
         
-        input_df = pd.DataFrame([{
-            'diet': diet,
-            'goal': user_data['goal']
-        }])
-        
-        encoded = encoder.transform(input_df)
-        plan_id = model.predict(encoded)[0]
-        return MEAL_PLANS[plan_id]
-        
-    except Exception as e:
-        raise ValueError(f"ML prediction error: {str(e)}")
-
-def get_rule_based_plan(user_data):
-    try:
-        diet = user_data['diet'][0].lower() if user_data['diet'] else 'vegetarian'
-        goal = user_data['goal'].lower()
-        
-        if 'vegetarian' in diet:
-            if 'weight-loss' in goal: return MEAL_PLANS[0]
-            if 'muscle-gain' in goal: return MEAL_PLANS[1]
-        elif 'vegan' in diet:
-            return MEAL_PLANS[3]
-        elif 'high-protein' in diet:
-            return MEAL_PLANS[1]
-        elif 'low-carb' in diet:
-            return MEAL_PLANS[2]
+        if not os.path.exists(model_path) or not os.path.exists(encoder_path):
+            raise FileNotFoundError("Model files not found")
             
-        return MEAL_PLANS[4]  # Default
-        
+        return (
+            joblib.load(model_path),
+            joblib.load(encoder_path)
+        )
     except Exception as e:
-        return MEAL_PLANS[0]
+        print(f"❌ Error loading model artifacts: {str(e)}")
+        return None, None
 
 if __name__ == '__main__':
-    train_model()
+    # Train and save model when run directly
+    try:
+        train_model()
+        print("Model training completed successfully")
+    except Exception as e:
+        print(f"Model training failed: {str(e)}")
