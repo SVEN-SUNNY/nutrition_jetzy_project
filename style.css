@@ -1,11 +1,11 @@
 /* style.css - Root Directory Version */
+:/* style.css */
 :root {
-  --primary: #2ecc71;
-  --secondary: #27ae60;
-  --dark: #2c3e50;
-  --light: #ecf0f1;
-  --error: #e74c3c;
-  --transition: all 0.3s ease;
+  --primary: #2ECC71;
+  --secondary: #27AE60;
+  --dark: #2C3E50;
+  --light: #ECF0F1;
+  --error: #E74C3C;
 }
 
 * {
@@ -19,7 +19,6 @@ body {
   background-color: var(--light);
   color: var(--dark);
   line-height: 1.6;
-  min-height: 100vh;
 }
 
 /* Hero Section */
@@ -28,41 +27,35 @@ body {
     url('https://images.unsplash.com/photo-1498837167922-ddd27525d352?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80');
   background-size: cover;
   background-position: center;
-  padding: 4rem 1rem;
+  padding: 4rem 2rem;
   text-align: center;
   color: white;
-  min-height: 60vh;
+  min-height: 80vh;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.hero-content {
-  max-width: 800px;
-  margin: 0 auto;
 }
 
 .hero h1 {
   font-size: 2.5rem;
   margin-bottom: 1rem;
   font-weight: 700;
-  line-height: 1.2;
 }
 
 .hero p {
   font-size: 1.2rem;
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
   opacity: 0.9;
 }
 
-/* Form Styles */
+/* Plan Form */
 .plan-form {
   background: rgba(255, 255, 255, 0.95);
   padding: 2rem;
   border-radius: 15px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  margin: 2rem auto;
   max-width: 600px;
+  margin: 0 auto;
 }
 
 .form-group {
@@ -79,7 +72,6 @@ body {
 
 .select-wrapper {
   position: relative;
-  margin-bottom: 1rem;
 }
 
 select {
@@ -90,8 +82,7 @@ select {
   background: white;
   font-size: 1rem;
   color: var(--dark);
-  transition: var(--transition);
-  appearance: none;
+  transition: all 0.3s ease;
 }
 
 select:focus {
@@ -100,12 +91,7 @@ select:focus {
   box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.2);
 }
 
-select[multiple] {
-  height: auto;
-  padding: 0.5rem;
-}
-
-/* Button Styles */
+/* CTA Button */
 .cta-button {
   background: var(--primary);
   color: white;
@@ -115,7 +101,7 @@ select[multiple] {
   font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: var(--transition);
+  transition: all 0.3s ease;
   width: 100%;
   display: flex;
   align-items: center;
@@ -130,9 +116,7 @@ select[multiple] {
 
 /* Results Section */
 .result-section {
-  padding: 2rem 1rem;
-  max-width: 800px;
-  margin: 0 auto;
+  padding: 4rem 2rem;
 }
 
 .result-card {
@@ -140,6 +124,8 @@ select[multiple] {
   border-radius: 15px;
   padding: 2rem;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  max-width: 800px;
+  margin: 2rem auto;
 }
 
 .meal-card {
@@ -161,7 +147,6 @@ select[multiple] {
   display: flex;
   gap: 1.5rem;
   margin-top: 1rem;
-  flex-wrap: wrap;
 }
 
 .nutrition-facts span {
@@ -169,16 +154,18 @@ select[multiple] {
   align-items: center;
   gap: 0.5rem;
   font-weight: 500;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
 }
 
-/* Macros Grid */
+.macros-summary {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 2px solid var(--light);
+}
+
 .macros-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
   margin-top: 1.5rem;
 }
 
@@ -201,14 +188,14 @@ select[multiple] {
   color: var(--dark);
 }
 
-/* Loader Styles */
+/* Loader */
 .loader {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.9);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -245,11 +232,6 @@ select[multiple] {
   align-items: center;
   gap: 0.8rem;
   animation: slideUp 0.3s ease;
-  z-index: 1001;
-}
-
-.error-message i {
-  font-size: 1.2rem;
 }
 
 @keyframes slideUp {
@@ -264,22 +246,21 @@ select[multiple] {
     min-height: auto;
   }
 
-  .hero h1 {
-    font-size: 2rem;
-  }
-
   .plan-form {
     padding: 1.5rem;
-    margin: 1rem;
+  }
+
+  .macros-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero h1 {
+    font-size: 2rem;
   }
 
   .cta-button {
     padding: 0.8rem 1.5rem;
     font-size: 1rem;
-  }
-
-  .macros-grid {
-    grid-template-columns: 1fr;
   }
 }
 
@@ -287,9 +268,3 @@ select[multiple] {
   display: none !important;
 }
 
-/* Utility Classes */
-.flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
