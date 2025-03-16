@@ -15,8 +15,8 @@ CORS(app, resources={
 
 # Load ML model and encoder
 try:
-    model = joblib.load('model/nutrition_model.pk1')
-    encoder = joblib.load('model/feature_encoder.pk1')
+    model = joblib.load('model/nutrition_model.pkl')
+    encoder = joblib.load('model/feature_encoder.pkl')
 except Exception as e:
     print(f"Error loading ML artifacts: {str(e)}")
     model = None
@@ -73,7 +73,7 @@ def get_plan():
         if model:
             # Prepare input
             input_df = pd.DataFrame([{
-                'diet': data['diet'][0],
+                'diet': data['diet'][0],  # Use the first selected diet
                 'goal': data['goal']
             }])
             
@@ -82,7 +82,7 @@ def get_plan():
             
             # Predict plan
             plan_id = model.predict(encoded)[0]
-            plan = MEAL_PLANS[plan_id]
+            plan = MEAL_PLANS.get(plan_id, MEAL_PLANS[0])  # Fallback to plan 0 if invalid ID
         else:
             plan = get_rule_based_plan(data)
         
@@ -109,7 +109,10 @@ def get_rule_based_plan(data):
     
     if diet == 'vegetarian' and goal == 'weight-loss':
         return MEAL_PLANS[0]
-    return MEAL_PLANS[1]
+    elif diet == 'high-protein' and goal == 'muscle-gain':
+        return MEAL_PLANS[1]
+    else:
+        return MEAL_PLANS[0]  # Default fallback plan
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
