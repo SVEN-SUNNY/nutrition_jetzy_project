@@ -1,7 +1,6 @@
-werkzeug<2.1.0  # Add this line
-scikit-learn==1.0.2
+# backend/requirements.txt
 flask==2.0.3
-scikit-learn==1.0.2
+scikit-learn==1.2.2  # Critical update for model compatibility
 pandas==1.5.3
 numpy==1.26.4
 joblib==1.2.0
