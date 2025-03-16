@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultSection = document.getElementById('resultSection');
     
     // Replace with your Render backend URL
-    const API_URL = 'https://your-backend.onrender.com/plan';
+    const API_URL = 'https://nutrition-jetzy-backend.onrender.com';
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
