@@ -6,18 +6,8 @@ import os
 import pandas as pd
 
 app = Flask(__name__)
-#CORS(app)  # Enable Cross-Origin Resource Sharing
-from flask_cors import CORS
+CORS(app)  # Enable Cross-Origin Resource Sharing
 
-app = Flask(__name__)
-CORS(app, resources={
-    r"/plan": {
-        "origins": ["https://your-github-username.github.io"],
-        "methods": ["POST"],
-        "allow_headers": ["Content-Type"]
-    }
-})
-# Load ML model and encoder
 try:
     model_path = os.path.join(os.path.dirname(__file__), 'model', 'nutrition_model.pkl')
     encoder_path = os.path.join(os.path.dirname(__file__), 'model', 'feature_encoder.pkl')
