@@ -1,10 +1,11 @@
-# backend/meal_plans.py
+import os
 import pandas as pd
 import numpy as np
 import joblib
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import OneHotEncoder
 
+# Meal Plans Database
 MEAL_PLANS = {
     0: {
         'name': 'Vegetarian Weight Loss',
@@ -220,6 +221,39 @@ def load_model_artifacts():
     except Exception as e:
         print(f"❌ Error loading model artifacts: {str(e)}")
         return None, None
+
+def generate_ml_plan(user_data, model, encoder):
+    """Generate a meal plan using the ML model"""
+    try:
+        # Prepare input
+        input_df = pd.DataFrame([{
+            'diet': user_data['diet'],
+            'goal': user_data['goal']
+        }])
+        
+        # Encode features
+        encoded = encoder.transform(input_df)
+        
+        # Predict plan
+        plan_id = model.predict(encoded)[0]
+        return MEAL_PLANS[plan_id]
+    except Exception as e:
+        raise ValueError(f"ML prediction failed: {str(e)}")
+
+def get_rule_based_plan(user_data):
+    """Fallback rule-based plan generation"""
+    try:
+        diet = user_data['diet'][0] if user_data['diet'] else 'vegetarian'
+        goal = user_data['goal']
+        
+        if diet == 'vegetarian' and goal == 'weight-loss':
+            return MEAL_PLANS[0]
+        elif diet == 'high-protein' and goal == 'muscle-gain':
+            return MEAL_PLANS[1]
+        else:
+            return MEAL_PLANS[2]  # Default plan
+    except Exception as e:
+        raise ValueError(f"Rule-based plan generation failed: {str(e)}")
 
 if __name__ == '__main__':
     # Train and save model when run directly
