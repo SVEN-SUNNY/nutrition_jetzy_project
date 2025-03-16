@@ -61,8 +61,8 @@ def get_plan_from_id(plan_id):
                 "lunch": "Quinoa salad",
                 "dinner": "Grilled vegetables"
             },
-            
-            "macros": {"calories": 1500, "protein": 55, "carbs": 120, "fats": 40}
+            'calories': 1500,
+            "macros": {"protein": 55, "carbs": 120, "fats": 40}
         },
         1: {
             "meals": {
@@ -70,7 +70,8 @@ def get_plan_from_id(plan_id):
                 "lunch": "Grilled chicken",
                 "dinner": "Salmon with broccoli"
             },
-            'macros': {"calories": 2200,"protein": 110, "carbs": 150, "fats": 70}
+            "calories": 2200,
+            'macros': {"protein": 110, "carbs": 150, "fats": 70}
         }
     }
     return plans.get(plan_id, plans[0])
