@@ -503,6 +503,6 @@ if __name__ == '__main__':
     print("🚀 Starting Nutrition Model Training...")
     try:
         train_model()
-        print("✨ Training completed successfully")
+        print(" Training completed successfully")
     except Exception as e:
-        print(f"🔥 Critical training error: {str(e)}")
+        print(f" Critical training error: {str(e)}")
