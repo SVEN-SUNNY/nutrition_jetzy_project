@@ -57,13 +57,16 @@ def get_plan():
         # Validate input
         data = request.json
         if not data.get('diet') or not data.get('goal'):
-            return jsonify({"error": "Missing required fields"}), 400
+            return jsonify({
+                "success": False,
+                "error": "Missing required fields"
+            }), 400
         
         # Generate plan
         if model:
             # Prepare input
             input_df = pd.DataFrame([{
-                'diet': data['diet'],
+                'diet': data['diet'][0],
                 'goal': data['goal']
             }])
             
@@ -80,18 +83,20 @@ def get_plan():
         print("Generated plan:", plan)
         
         return jsonify({
-            "meals": plan['meals'],
-            "calories": plan['calories'],
-            "macros": plan.get('macros', {})
+            "success": True,
+            "plan": plan
         })
     
     except Exception as e:
         # Log error
         print("Error:", str(e))
-        return jsonify({"error": str(e)}), 500
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
 
-# Fallback rule-based plan
 def get_rule_based_plan(data):
+    """Fallback rule-based plan generation"""
     diet = data['diet'][0] if data['diet'] else 'vegetarian'
     goal = data['goal']
     
@@ -99,6 +104,5 @@ def get_rule_based_plan(data):
         return MEAL_PLANS[0]
     return MEAL_PLANS[1]
 
-# Run the app
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
