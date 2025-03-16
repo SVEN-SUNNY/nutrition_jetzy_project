@@ -5,18 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NutriJet - AI Nutrition Planner</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="/style.css"> <!-- Absolute path -->
+    <link rel="stylesheet" href="/style.css">
 </head>
 <body>
     <header class="hero">
         <div class="hero-content">
-            <h1>AI-Powered Nutrition Planning</h1>
-            <p>Get your personalized meal plan in seconds</p>
+            <h1>Your Personalized Nutrition Plan</h1>
+            <p>Powered by Machine Learning</p>
             
             <div class="plan-form">
                 <form id="nutritionForm">
                     <div class="form-group">
-                        <label>Dietary Preferences</label>
+                        <label for="diet">Dietary Preferences</label>
                         <div class="select-wrapper">
                             <select id="diet" multiple required>
                                 <option value="vegetarian">Vegetarian</option>
@@ -28,7 +28,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label>Health Goals</label>
+                        <label for="goal">Health Goal</label>
                         <div class="select-wrapper">
                             <select id="goal" required>
                                 <option value="weight-loss">Weight Loss</option>
@@ -39,7 +39,8 @@
                     </div>
 
                     <button type="submit" class="cta-button">
-                        Generate My Plan <i class="fas fa-arrow-right"></i>
+                        <span class="button-text">Generate Plan</span>
+                        <i class="fas fa-arrow-right"></i>
                     </button>
                 </form>
             </div>
@@ -51,39 +52,116 @@
         <p>Analyzing your profile with AI...</p>
     </div>
 
-    <section id="resultSection" class="hidden">
+    <section id="resultSection" class="result-section hidden">
         <div class="result-card">
             <h2>Your AI-Generated Plan</h2>
             
-            <div class="meal-card breakfast">
-                <h3><i class="fas fa-sun"></i> Breakfast</h3>
-                <p id="breakfastMeal">Loading...</p>
-                <div class="nutrition-facts">
-                    <span class="calories"><i class="fas fa-fire"></i> <span id="breakfastCalories">0</span> kcal</span>
-                    <span class="protein"><i class="fas fa-dumbbell"></i> <span id="breakfastProtein">0</span>g protein</span>
+            <div class="plan-details">
+                <div class="meal-card breakfast">
+                    <h3><i class="fas fa-sun"></i> Breakfast</h3>
+                    <p id="breakfastMeal">Loading...</p>
+                    <div class="nutrition-facts">
+                        <span class="calories"><i class="fas fa-fire"></i> <span id="breakfastCalories">0</span> kcal</span>
+                        <span class="protein"><i class="fas fa-dumbbell"></i> <span id="breakfastProtein">0</span>g protein</span>
+                    </div>
                 </div>
+
+                <!-- Repeat for Lunch and Dinner -->
             </div>
 
-            <div class="meal-card lunch">
-                <h3><i class="fas fa-sun"></i> Lunch</h3>
-                <p id="lunchMeal">Loading...</p>
-                <div class="nutrition-facts">
-                    <span class="calories"><i class="fas fa-fire"></i> <span id="lunchCalories">0</span> kcal</span>
-                    <span class="protein"><i class="fas fa-dumbbell"></i> <span id="lunchProtein">0</span>g protein</span>
-                </div>
-            </div>
-
-            <div class="meal-card dinner">
-                <h3><i class="fas fa-moon"></i> Dinner</h3>
-                <p id="dinnerMeal">Loading...</p>
-                <div class="nutrition-facts">
-                    <span class="calories"><i class="fas fa-fire"></i> <span id="dinnerCalories">0</span> kcal</span>
-                    <span class="protein"><i class="fas fa-dumbbell"></i> <span id="dinnerProtein">0</span>g protein</span>
+            <div class="macros-summary">
+                <h3><i class="fas fa-chart-pie"></i> Daily Macros</h3>
+                <div class="macros-grid">
+                    <div class="macro-item">
+                        <div class="macro-label">Protein</div>
+                        <div class="macro-value" id="totalProtein">0g</div>
+                    </div>
+                    <!-- Add Carbs and Fats similarly -->
                 </div>
             </div>
         </div>
     </section>
+    <script src="/script.js"></script>
+    <script>
+        const API_URL = 'https://nutrition-jetzy-backend.onrender.com/plan'; // ← Use your Render URL
+        
+        document.getElementById('nutritionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const loader = document.getElementById('loader');
+            const resultSection = document.getElementById('resultSection');
+            
+            loader.classList.remove('hidden');
+            resultSection.classList.add('hidden');
 
-    <script src="/script.js"></script> <!-- Absolute path -->
+            try {
+                const formData = {
+                    diet: Array.from(document.querySelectorAll('#diet option:checked'))
+                            .map(option => option.value),
+                    goal: document.getElementById('goal').value
+                };
+
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) throw new Error('API request failed');
+                
+                const plan = await response.json();
+                updatePlanUI(plan);
+                
+            } catch (error) {
+                showError('Failed to generate plan. Please try again later.');
+            } finally {
+                loader.classList.add('hidden');
+                resultSection.classList.remove('hidden');
+            }
+        });
+
+        function updatePlanUI(plan) {
+    // Update meals
+            document.getElementById('breakfastMeal').textContent = plan.meals.breakfast;
+            document.getElementById('lunchMeal').textContent = plan.meals.lunch;
+            document.getElementById('dinnerMeal').textContent = plan.meals.dinner;
+        
+            document.getElementById('breakfastCalories').textContent = plan.macros.breakfast.calories;
+            document.getElementById('lunchCalories').textContent = plan.macros.lunch.calories;
+            document.getElementById('dinnerCalories').textContent = plan.macros.dinner.calories;
+        
+            document.getElementById('breakfastProtein').textContent = plan.macros.breakfast.protein;
+            document.getElementById('lunchProtein').textContent = plan.macros.lunch.protein;
+            document.getElementById('dinnerProtein').textContent = plan.macros.dinner.protein;
+        
+            document.getElementById('totalCalories').textContent = plan.calories;
+            document.getElementById('totalProtein').textContent = `${plan.macros.daily.protein}g`;
+            document.getElementById('totalCarbs').textContent = `${plan.macros.daily.carbs}g`;
+            document.getElementById('totalFats').textContent = `${plan.macros.daily.fats}g`;
+        
+            updateProgressBar('proteinProgress', plan.macros.daily.protein, plan.macros.targets.protein);
+            updateProgressBar('carbsProgress', plan.macros.daily.carbs, plan.macros.targets.carbs);
+            updateProgressBar('fatsProgress', plan.macros.daily.fats, plan.macros.targets.fats);
+}
+
+// Optional: Progress bar updater
+function updateProgressBar(elementId, current, target) {
+    const progress = (current / target) * 100;
+    document.getElementById(elementId).style.width = `${Math.min(progress, 100)}%`;
+}
+
+        function showError(message) {
+            const errorEl = document.createElement('div');
+            errorEl.className = 'error-message';
+            errorEl.innerHTML = `
+                <i class="fas fa-exclamation-triangle"></i>
+                ${message}
+            `;
+            document.body.appendChild(errorEl);
+            setTimeout(() => errorEl.remove(), 5000);
+        }
+    </script>
 </body>
 </html>
