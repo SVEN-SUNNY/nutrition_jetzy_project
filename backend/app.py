@@ -3,9 +3,10 @@ from flask_cors import CORS
 import joblib
 import pandas as pd
 import json
+import numpy as np
 from datetime import datetime
 import os
-from meal_plans import MEAL_PLANS, train_model
+from meal_plans import MEAL_PLANS, get_rule_based_plan, train_model
 
 app = Flask(__name__)
 CORS(app, resources={
@@ -41,6 +42,9 @@ def store_submission(data):
 def load_model():
     """Load current model and encoder with error handling"""
     try:
+        # Configure numpy for compatibility
+        np.random.bit_generator = np.random.MT19937()
+        
         model_path = os.path.join(MODEL_DIR, 'nutrition_model.pkl')
         encoder_path = os.path.join(MODEL_DIR, 'feature_encoder.pkl')
         
@@ -74,10 +78,12 @@ def generate_nutrition_plan():
         model, encoder = load_model()
         
         if model and encoder:
-            # Prepare features
-            diet_goal = f"{data['diet'][0]}_{data['goal']}"
+            # Prepare features with proper data types
+            diet_value = data['diet'][0] if isinstance(data['diet'], list) else data['diet']
+            diet_goal = f"{diet_value}_{data['goal']}"
+            
             input_df = pd.DataFrame([{
-                'diet': data['diet'][0],
+                'diet': diet_value,
                 'goal': data['goal'],
                 'diet_goal': diet_goal
             }])
@@ -102,10 +108,17 @@ def generate_nutrition_plan():
         
     except Exception as e:
         app.logger.error(f"Plan generation error: {str(e)}")
-        return jsonify({
-            "success": False,
-            "error": "Failed to generate nutrition plan"
-        }), 500
+        try:
+            # Secondary fallback attempt
+            return jsonify({
+                "success": True,
+                "plans": [get_rule_based_plan(data)]
+            })
+        except Exception as fallback_error:
+            return jsonify({
+                "success": False,
+                "error": f"Main: {str(e)}, Fallback: {str(fallback_error)}"
+            }), 500
 
 @app.route('/selection', methods=['POST'])
 def handle_plan_selection():
@@ -128,6 +141,7 @@ def handle_plan_selection():
         try:
             train_model()
             app.logger.info("Model retrained successfully")
+            return jsonify({"success": True})
         except Exception as e:
             app.logger.error(f"Model retraining failed: {str(e)}")
             return jsonify({
@@ -135,8 +149,6 @@ def handle_plan_selection():
                 "error": "Selection saved but model update failed"
             }), 500
             
-        return jsonify({"success": True})
-        
     except Exception as e:
         app.logger.error(f"Selection processing error: {str(e)}")
         return jsonify({
