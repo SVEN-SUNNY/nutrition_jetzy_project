@@ -15,8 +15,8 @@ CORS(app, resources={
     }
 })
 try:
-    model_path = os.path.join(os.path.dirname(__file__), 'model', 'nutrition_model.pkl')
-    encoder_path = os.path.join(os.path.dirname(__file__), 'model', 'feature_encoder.pkl')
+    model_path = os.path.join(os.path.dirname(__file__), 'model', 'nutrition_model.pk1')
+    encoder_path = os.path.join(os.path.dirname(__file__), 'model', 'feature_encoder.pk1')
     
     model = joblib.load(model_path)
     encoder = joblib.load(encoder_path)
